@@ -18,8 +18,8 @@
 							
 							
 			$sql = $sqlqry;   //"select * from events where epoch LIKE '$datetime%'";
-			$fields = array( 'id', 'object_id', 'name', 'log_description', 'status', 'type',
-								'epoch', 'priority', 'extradata');
+			/*$fields = array( 'id', 'object_id', 'name', 'log_description', 'status', 'type',
+								'epoch', 'priority', 'extradata');*/
 			
 			$mysqlQry = $mysql->query($sql);
 			$data = array();
