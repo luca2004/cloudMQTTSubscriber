@@ -105,6 +105,10 @@ class mysql {
           return $this->conn;
     }
 
+		function destroy(){
+				mysql_close($this->conn);
+		}
+
 	/**
 	 * mysql::query()
 	 * Execute SQL
@@ -217,7 +221,7 @@ class mysql {
 
 			if (checkdate($nMonth, $nDay, $nYear)) $sDate = "$nDay/$nMonth/$nYear";
 		} else {
-			if ($debug) echo "Date format inválid. Use dd/mm/YYYY <br>\n\n";
+			if ($debug) echo "Date format invï¿½lid. Use dd/mm/YYYY <br>\n\n";
 		}
 
 		return $sDate;
@@ -245,7 +249,7 @@ class mysql {
 
 			if (checkdate($nMonth, $nDay, $nYear)) $sDate = "$nDay/$nMonth/$nYear";
 		} else {
-			if ($debug) echo "Date format inválid. Use dd/mm/YYYY <br>\n\n";
+			if ($debug) echo "Date format invï¿½lid. Use dd/mm/YYYY <br>\n\n";
 		}
 
 		if ($tm != "" && $tm != "00:00:00") $sDate = "$sDate $tm";
@@ -274,7 +278,7 @@ class mysql {
 			//if (checkdate($nMonth, $nDay, $nYear))
 			$sDate = "$nYear/$nMonth/$nDay";
 		} else {
-			if ($debug) echo "Date format inválid [$dt]. Use dd/mm/YYYY <br>\n\n";
+			if ($debug) echo "Date format invï¿½lid [$dt]. Use dd/mm/YYYY <br>\n\n";
 		}
 
 		return $sDate;
@@ -303,7 +307,7 @@ class mysql {
 			//if (checkdate($nMonth, $nDay, $nYear))
 			$sDate = "$nYear/$nMonth/$nDay";
 		} else {
-			if ($debug) echo "Date format inválid [$dt]. Use dd/mm/YYYY <br>\n\n";
+			if ($debug) echo "Date format invï¿½lid [$dt]. Use dd/mm/YYYY <br>\n\n";
 		}
 
 		if ($tm != "" && $tm != "00:00:00") $sDate = "$sDate $tm";
@@ -336,7 +340,7 @@ class mysql {
 	/**
 	 * mysql::cValorBr2MySQL()
 	 * convert comma to point
-	 * 
+	 *
 	 * @param $valor
 	 * @return double
 	 */
@@ -356,7 +360,7 @@ class mysql {
 
 	/**
 	 * mysql::cBooleanBr2MySQL()
-	 * convert 1 for "Sim" and 0 for "Não"
+	 * convert 1 for "Sim" and 0 for "Nï¿½o"
 	 *
 	 * @param $valor
 	 * @return int
@@ -378,7 +382,7 @@ class mysql {
 
 	/**
 	 * mysql::cBooleanBr2MySQL()
-	 * convert "Sim" for 1 and "Não"for 0
+	 * convert "Sim" for 1 and "Nï¿½o"for 0
 	 *
 	 * @param $valor
 	 * @return string
@@ -390,7 +394,7 @@ class mysql {
     		if ($valor)
     			$valor = "Sim";
     		else
-    			$valor = "Não";
+    			$valor = "Nï¿½o";
 		}
         if ($debug) echo "Portuguese[$valor] <br>\n\n";
 

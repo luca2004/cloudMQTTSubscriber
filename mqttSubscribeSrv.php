@@ -1,27 +1,23 @@
 <?php
 
+	include_once("config.php");
+	include_once("libs/phpMQTT/phpMQTT.php");
+	include_once("libs/phpMQTT/class.mqttRequestHandler.php");
+	include_once("libs/phpMQTT/class.mqttNotifyHandler.php");
 
-	include_once("phpMQTT/phpMQTT.php");
-	include_once("libs/class.dbQueries.php");
-	include_once("libs/class.mqttMsgEncDec.php");
+	define('FILE_LOG', 'mqttSub.log');
+	define('FILE_LOG_ENABLE', 1);
 
-
-  $cloudMQTTConfig = array(
-					'host'	=> "m21.cloudmqtt.com",  'port' => 11979,
-					'username' => "ucqvnetw", 'password' => "ovYAygrGpLW0",
-					'topic' => 'dev');
-					
-  $dbConfig = array( 'host' => 'localhost', 'user' => 'root', 'password' => '', 'database' => 'clight' );
-
-  $mqtt = new phpMQTT($cloudMQTTConfig['host'], $cloudMQTTConfig['port'], "ClientID".rand());
-
-  if(!$mqtt->connect(true,NULL,$cloudMQTTConfig['username'],$cloudMQTTConfig['password'])){
-	exit(1);
+  $mqtt = new phpMQTT($MQTTConfig['host'], $MQTTConfig['port'], "ClientID".rand());
+	$mqtt->debug = $MQTTConfig['debug'];
+  if(!$mqtt->connect(true,NULL,$MQTTConfig['username'],$MQTTConfig['password'])){
+		exit(1);
   }
 
   //currently subscribed topics
-  $topics[$cloudMQTTConfig['topic']] =
-	array("qos"=>0, "function"=>"procmsg");
+
+  $topics[$MQTTConfig['topic']] =
+			array("qos"=>0, "function"=>"procmsg");
   $mqtt->subscribe($topics,0);
 
   while($mqtt->proc()){
@@ -29,34 +25,56 @@
   }
 
   $mqtt->close();
-  function procmsg($topic,$msg){
-		global $dbConfig, $mqtt;
 
+	function logging($msg){
+			if(FILE_LOG_ENABLE == 0)
+					return;
+
+			$log = date('Y-m-d H:i:s ').$msg;
+			file_put_contents(FILE_LOG, $log, FILE_APPEND);
+	}
+
+  function procmsg($topic,$msg){
+		global $dbConfig, $mqtt, $responseSleepSec;
+
+		echo "Topic Recieved: $topic".PHP_EOL;
 		echo "Msg Recieved: $msg".PHP_EOL;
-		$msgInfo = new mqttMsgDecode($msg);
+		$msgInfo = new mqttMsgDecode($topic, $msg);
 
 		if($msgInfo->isRequest()){
-			$cmdData = $msgInfo->getData();
-			$dbHE = new dbQueries($dbConfig);
-			$records= array();
-			if($cmdData['action'] == 'query')
-				$records = $dbHE->getQry($cmdData['sql']);
+			$RH = new mqttRequestHandler($msgInfo, $dbConfig);
+			$response = $RH->exec();
 
-		//	var_dump($records);
-			if(count($records) > 0){
-				foreach($records as $item){
+			if(count($response) > 0){
+				foreach($response as $item){
 					$msg = new mqttMsgEncode($item);
-					$mqtt->publish($topic, $msg->getNotifyMsg($cmdData['action'], $msgInfo->getSession()), 0 );
+					$mqtt->publish($topic, $msg->getResponseMsg($msgInfo->getAction(), $msgInfo->getSession()), 0 );
 
-					sleep(1);
+					if($responseSleepSec > 0)
+						sleep($responseSleepSec);
 				}
 			}
 			else{
-				$msg = new mqttMsgEncode(array());
-				$mqtt->publish($topic, $msg->getNotifyMsg($cmdData['action'], $msgInfo->getSession()), 0 );
+				echo "No response: $RH->lastError".PHP_EOL;
 			}
-
 		}
+		else if($msgInfo->isNotify()){
+
+			  logging($topic.' - '.$msg);
+
+				$NH = new mqttNotifyHandler($msgInfo, $dbConfig);
+				$response = $NH->exec();
+
+				if(count($response) == 0){
+						echo "No notify: $NH->lastError".PHP_EOL;
+				}
+		}
+		else{
+			/*$msg = new mqttMsgEncode(array());
+			$mqtt->publish($topic, $msg->getNotifyMsg($cmdData['action'], $msgInfo->getSession()), 0 );*/
+		}
+
+
 
   }
   echo "//--------------------------------------------------------------------------------//".PHP_EOL;
