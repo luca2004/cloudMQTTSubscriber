@@ -57,6 +57,10 @@ define('MQTT_CMD_RESPONSE', 'response');
 			if(isset($this->msgInfo['interface']))	return $this->msgInfo['interface'];
 			return '';
 		}
+		public function getApp(){
+			if(isset($this->msgInfo['app']))	return $this->msgInfo['app'];
+			return '';
+		}
 		public function getAction(){
 			if(isset($this->msgInfo['action']))	return $this->msgInfo['action'];
 			return '';

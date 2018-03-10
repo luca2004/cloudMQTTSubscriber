@@ -4,9 +4,10 @@
 	include_once("libs/phpMQTT/phpMQTT.php");
 	include_once("libs/phpMQTT/class.mqttRequestHandler.php");
 	include_once("libs/phpMQTT/class.mqttNotifyHandler.php");
+	include_once("libs/phpMQTT/class.mqttResponseHandler.php");	
 
 	define('FILE_LOG', 'mqttSub.log');
-	define('FILE_LOG_ENABLE', 1);
+	define('FILE_LOG_ENABLE', 0);
 
   $mqtt = new phpMQTT($MQTTConfig['host'], $MQTTConfig['port'], "ClientID".rand());
 	$mqtt->debug = $MQTTConfig['debug'];
@@ -34,7 +35,16 @@
 			file_put_contents(FILE_LOG, $log, FILE_APPEND);
 	}
 
-  function procmsg($topic,$msg){
+	function factory_request_handler($msgInfo){
+		global $dbConfig
+		$app = $msgInfo->getApp();
+		if($app == '')
+			return new mqttRequestHandler($msgInfo, $dbConfig);
+		if($app == 'rfserver')
+			return new mqttRFServerRequestHandler($msgInfo, $dbConfig);
+	}
+
+  	function procmsg($topic,$msg){
 		global $dbConfig, $mqtt, $responseSleepSec;
 
 		echo "Topic Recieved: $topic".PHP_EOL;
@@ -42,7 +52,7 @@
 		$msgInfo = new mqttMsgDecode($topic, $msg);
 
 		if($msgInfo->isRequest()){
-			$RH = new mqttRequestHandler($msgInfo, $dbConfig);
+			$RH = factory_request_handler($msgInfo);
 			$response = $RH->exec();
 
 			if(count($response) > 0){
@@ -60,9 +70,19 @@
 		}
 		else if($msgInfo->isNotify()){
 
-			  logging($topic.' - '.$msg);
+				logging($topic.' - '.$msg);
 
 				$NH = new mqttNotifyHandler($msgInfo, $dbConfig);
+				$response = $NH->exec();
+
+				if(count($response) == 0){
+						echo "No notify: $NH->lastError".PHP_EOL;
+				}
+		}
+		else if($msgInfo->isResponse()){
+				logging('Response ==> '.$topic.' - '.$msg);
+				
+				$NH = new mqttResponseHandler($msgInfo, $dbConfig);
 				$response = $NH->exec();
 
 				if(count($response) == 0){

@@ -26,5 +26,5 @@ $dbConfig = array( 'host' => 'localhost', 'user' => 'root', 'password' => '', 'd
 $publisherIp = "192.168.100.100";
 
 $responseSleepSec = 0;
-$MQTTConfig = $IBMIOTMQTTConfig;
+$MQTTConfig = $localMQTTConfig;
  ?>

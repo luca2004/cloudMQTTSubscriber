@@ -122,6 +122,7 @@ class IRFServerEngineHandler extends IEngineHandler{
         return $ret;
       }
 
+      // Legge parametri direttamente dal nodo
       public function getDatabyAddress($type, $address, $obj){
 
           $ret = array();
@@ -138,7 +139,7 @@ class IRFServerEngineHandler extends IEngineHandler{
                       );
           }
           if($type == SENSORS_TYPE){
-            $lux = $this->getSensorLuxLevel( $data['idSensor'] );
+            $lux = $this->getSensorLuxLevel( $address );
 
             $ret = array(
                   'id' => $obj['id'],
@@ -366,7 +367,7 @@ class CLIParameters
   public function __construct($argc, $argv)
   {
       if($argc != null && $argc > 0){
-          $this->parse($argv)
+          $this->parse($argv);
       }
   }
 

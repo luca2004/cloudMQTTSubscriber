@@ -3,6 +3,7 @@
 include_once("libs/phpMQTT/class.mqttHandler.php");
 include_once("libs/class.dbQueries.php");
 include_once("libs/definedbobject.php");
+include_once("libs/class.RFLedSocket.php");
 
 
 
@@ -14,6 +15,8 @@ class mqttRequestHandler extends mqttHandler{
 
   //---------------------------------------------------------//
   // Implementazione function di action
+  //   Metodo per query su DB CLight
+  //        sql: query sul DB
   protected function db_query($cmdData){
       $dbHE = new dbQueries($this->dbConfig);
       $records= array();
@@ -22,6 +25,7 @@ class mqttRequestHandler extends mqttHandler{
       return $records;
   }
 
+  //   Metodo per navigazione su Map CLight
   protected function get_map_info($cmdData){
       $dbHE = new dbQueries($this->dbConfig);
 
@@ -72,14 +76,22 @@ class mqttRequestHandler extends mqttHandler{
 
 
 //---------------------------------------------------------------------------------------//
-
+  //   Metodo per rfserfer o iotserver	
   protected function rfserver_update_node($cmdData){
-
+	  $ret = array();	
+  
       $ip = isset($cmdData['port']) ? $cmdData['ip'] : '127.0.0.1';
       $port = isset($cmdData['port']) ? $cmdData['port'] : 5911;
       $rf = new RFLedSocket($ip, $port);
 
-      $resp = $rf->getSlaveDAC($cmdData['idnode']);
+	  $info = $rf->execSQL("select * from nodes where idSensor = ".$cmdData['address']);
+
+	  if(isset($info['result']) && $info['result'] == 'NOK')
+		return $ret;
+	  if(count($info) > 0)
+			$info = $info[0];
+	  
+      $resp = $rf->getSlaveDAC($cmdData['address']);
       $currlevel = -1;
       if( count($resp) > 0 ){
           if(isset($resp['output'])){
@@ -93,8 +105,12 @@ class mqttRequestHandler extends mqttHandler{
         }
       }
 
-      $ret = array(
-            'address' => $cmdData['idnode'],
+	  
+      $ret[] = array(
+			'id' => $info['id'],
+            'name' => $info['name'],
+            'address' => $cmdData['address'],
+			'universe' => $info['idNetwork'],
             'level' => $currlevel,
               );
 
